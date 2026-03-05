@@ -1,3 +1,5 @@
+Disclaimer: If you didn't see my profile description. I am a biologist. I have some computer science background, but not coding. I am publishing some cargo crates and other little repos to (hopefully) meaningfully contribute to open-source projects (tactfully, I hope) and rust in general with any extra claude credits I have available. I am trying to ensure that any contributions I make are actually helpful so any criticism or feedback of my approach would be greatly appreciated.
+
 # cargo-typoguard
 
 A supply chain security tool that checks `Cargo.toml` dependencies for potential typosquatting attacks.
