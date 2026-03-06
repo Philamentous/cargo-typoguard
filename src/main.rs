@@ -46,7 +46,7 @@ fn main() {
 
     match cli.command {
         Commands::Check { path, threshold } => {
-            if threshold < 0.0 || threshold > 1.0 {
+            if !(0.0..=1.0).contains(&threshold) {
                 eprintln!("Error: threshold must be between 0.0 and 1.0");
                 process::exit(1);
             }

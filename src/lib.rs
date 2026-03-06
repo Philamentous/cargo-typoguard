@@ -362,7 +362,7 @@ pub fn query_crates_io(crate_name: &str) -> Result<Option<CratesIoResponse>, Str
     let url = format!("https://crates.io/api/v1/crates/{crate_name}");
 
     let response = ureq::get(&url)
-        .set("User-Agent", "cargo-typoguard/0.1.0")
+        .set("User-Agent", &format!("cargo-typoguard/{}", env!("CARGO_PKG_VERSION")))
         .call();
 
     match response {
@@ -390,31 +390,37 @@ fn is_recently_created(created_at: &str) -> bool {
         return false;
     }
 
-    let Ok(year) = parts[0].parse::<i64>() else {
+    let Ok(year) = parts[0].parse::<i32>() else {
         return false;
     };
-    let Ok(month) = parts[1].parse::<i64>() else {
+    let Ok(month) = parts[1].parse::<u32>() else {
         return false;
     };
-    let Ok(day) = parts[2].parse::<i64>() else {
+    let Ok(day) = parts[2].parse::<u32>() else {
         return false;
     };
 
-    // Simple days-since-epoch approximation for comparison
-    let crate_days = year * 365 + month * 30 + day;
+    // Convert date to days since epoch using proper calendar math
+    let crate_epoch_days = days_from_civil(year, month, day);
 
-    // Get current date from system time
     let now = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap_or_default();
-    let now_days = now.as_secs() as i64 / 86400;
-
-    // Convert epoch days to comparable format
-    // epoch is 1970-01-01, so we approximate
-    let epoch_base = 1970 * 365 + 30 + 1;
-    let crate_epoch_days = crate_days - epoch_base;
+    let now_days = (now.as_secs() / 86400) as i64;
 
     (now_days - crate_epoch_days).abs() < 30
+}
+
+/// Convert a civil date to days since Unix epoch (1970-01-01).
+/// Algorithm from Howard Hinnant's date library.
+fn days_from_civil(year: i32, month: u32, day: u32) -> i64 {
+    let y = if month <= 2 { year as i64 - 1 } else { year as i64 };
+    let m = if month <= 2 { month as i64 + 9 } else { month as i64 - 3 };
+    let era = y.div_euclid(400);
+    let yoe = y.rem_euclid(400) as u64;
+    let doy = (153 * m as u64 + 2) / 5 + day as u64 - 1;
+    let doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
+    era * 146097 + doe as i64 - 719468
 }
 
 const LOW_DOWNLOAD_THRESHOLD: u64 = 1000;
